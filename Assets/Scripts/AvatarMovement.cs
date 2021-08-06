@@ -150,9 +150,9 @@ public class AvatarMovement : MonoBehaviour{
     }
 
     private void OnDrawGizmos() {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawSphere(groundChecker.position, 0.05f);
         Gizmos.color = Color.red;
+        Gizmos.DrawSphere(groundChecker.position, 0.05f);
+        Gizmos.color = Color.blue;
         Gizmos.DrawSphere(ceilingChecker.position, 0.05f);
     }
     #endregion
