@@ -18,6 +18,8 @@ public class Avatar : MonoBehaviour{
     [SerializeField] public float crouchSpeedMultiplier = 0.75f;
     [SerializeField] public float bounciness = 1.0f;
     public float size = 4.0f;
+    [SerializeField] private float groundCheckerRoomForError = 0.0001f;
+    [SerializeField] private float ceilingCheckerRoomForError = 0.0001f;
 
     [SerializeField] private bool isRunning = false;
     [SerializeField] private bool isGrounded = false;
@@ -31,12 +33,13 @@ public class Avatar : MonoBehaviour{
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
     }
-
+    
     void Start(){
         
     }
 
     void Update(){
+        
         hVal = Input.GetAxis("Horizontal");
         if((Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift)) && !isJumping) {
             isRunning = true;
@@ -45,13 +48,16 @@ public class Avatar : MonoBehaviour{
         }
 
         if (Input.GetButtonDown("Jump")) {
-            isJumping = true;
+            if (!isJumping && isGrounded) {
+                anim.SetBool("Jump", true);
+                isJumping = true;
+            }
         }else if (Input.GetButtonUp("Jump")) {
             isJumping = false;
         }
 
         if (Input.GetButtonDown("Crouch")) {
-            isCrouching = true;
+            if (isGrounded) isCrouching = true;
         } else if (Input.GetButtonUp("Crouch")) {
             isCrouching = false;
             if (CeilingCheck()) {
@@ -59,11 +65,12 @@ public class Avatar : MonoBehaviour{
                 isCrouching = true;
             }
         }
+
     }
     
     void FixedUpdate() {
-        Move(hVal);
         isGrounded = GroundCheck();
+        Move(hVal); //controls both vertical and horizontal movement
     }
 
     void Move(float direction) {
@@ -97,28 +104,34 @@ public class Avatar : MonoBehaviour{
 
         transform.localScale = newScale;
         anim.SetFloat("xVelocity", Mathf.Abs(rb.velocity.x));
-        UnityEngine.Debug.Log(Mathf.Abs(rb.velocity.x));
     }
 
     void MoveVertical() {
+        if (rb.velocity.y < 0) isCrouching = false;
         if (isGrounded) {
             standingCollider.enabled = !isCrouching;
             if (isJumping && !isCrouching) {
-                rb.AddForce(new Vector2(0f, bounciness * 175));
+
+                /* This one-liner was added as a band-aid to an issue whereby jumps would occur before the avatar was truly grounded, and so residual
+                 * force downwards would result in very short jumps (replicate by holding down up jumping from a low elevation platform to a high one).
+                 * By terminating downward force, all jumps will achieve equal height. If the collision issue were resolved, this could be safely removed. */
+                rb.velocity = new Vector2(rb.velocity.x, 0);
+
+                rb.AddForce(new Vector2(0f, bounciness * 350));
             }
             anim.SetBool("Crouch", isCrouching);
         }
+        anim.SetFloat("yVelocity", rb.velocity.y);
     }
 
     bool GroundCheck() {
-        //return Physics2D.OverlapCircle(groundChecker.position, 0.1f, groundLayer);
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(groundChecker.position, 0.1f, groundLayer);
-        isGrounded = (colliders.Length > 0) ? true : false;
-        return isGrounded;
+        bool grounded = Physics2D.OverlapCircle(groundChecker.position, groundCheckerRoomForError, groundLayer);
+        anim.SetBool("Jump", !grounded);
+        return grounded;
     }
 
     bool CeilingCheck() {
-        return Physics2D.OverlapCircle(ceilingChecker.position, 0.1f, groundLayer);
+        return Physics2D.OverlapCircle(ceilingChecker.position, ceilingCheckerRoomForError, groundLayer);
     }
 
 }
