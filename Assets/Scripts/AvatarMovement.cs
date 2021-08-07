@@ -44,7 +44,9 @@ public class AvatarMovement : MonoBehaviour{
     }
 
     private void Update(){
-        
+
+        if (!AllowedToMove()) return;
+
         hVal = Input.GetAxis("Horizontal");
         if((Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift)) && !isJumping) {
             isRunning = true;
@@ -85,6 +87,9 @@ public class AvatarMovement : MonoBehaviour{
     #region Movement
 
     private void Move(float direction) {
+
+        if (!AllowedToMove()) return;
+
         Crouch(); //does not crouch automatically, sets necessary animations and colliders if conditions are met
 
         float speed = 
@@ -147,6 +152,10 @@ public class AvatarMovement : MonoBehaviour{
 
     private bool CeilingCheck() {
         return Physics2D.OverlapCircle(ceilingChecker.position, 0.05f, groundLayer);
+    }
+
+    private bool AllowedToMove() {
+        return !FindObjectOfType<DialogueController>().windowIsActive;
     }
 
     private void OnDrawGizmos() {

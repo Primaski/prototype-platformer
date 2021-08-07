@@ -9,23 +9,25 @@ public class Item : MonoBehaviour{
     public InteractionType itemType;
     public enum InteractionType { NONE, PICKUP, EXAMINE, EXAMINEANDPICKUP }
 
+    [Header("Details")]
+    public string itemName;
+    public string descriptionText;
+    public Sprite image;
+
 
     public virtual void Interact() {
         switch (itemType) {
             case InteractionType.PICKUP:
-            Debug.Log("Okay, I'll pick it up!");
             Destroy(gameObject);
             break;
             case InteractionType.EXAMINE:
-            Debug.Log("Okay, I'll examine it!");
             Destroy(gameObject);
             break;
             case InteractionType.EXAMINEANDPICKUP:
-            Debug.Log("Okay, I'll examine it, then give the choice of picking it up!");
             Destroy(gameObject);
             break;
             default:
-            Debug.Log("Item has no type assigned.");
+            Debug.LogWarning("Item has no type assigned.");
             break;
         }
     }
