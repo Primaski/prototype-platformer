@@ -1,35 +1,56 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(CapsuleCollider2D))]
 public class Item : MonoBehaviour{
 
-
-    public InteractionType itemType;
-    public enum InteractionType { NONE, PICKUP, EXAMINE, EXAMINEANDPICKUP }
+    public enum InteractionType { NONE, PICKUP, EXAMINE, EXAMINEANDPICKUP, EXAMINEANDDESTROY }
+    public enum ItemType { NONE, AUTOMATIC, INTERACTABLE }
+    public InteractionType interactionType;
+    private protected ItemType itemType;
 
     [Header("Details")]
-    public string itemName;
-    public string descriptionText;
-    public Sprite image;
+    public string itemName = "";
+    public string descriptionText = "Seems pretty ordinary to me.";
+    public Sprite customImage = null;
 
+    [Header("Custom events")]
+    public UnityEvent customEvents;
 
-    public virtual void Interact() {
-        switch (itemType) {
-            case InteractionType.PICKUP:
-            Destroy(gameObject);
-            break;
-            case InteractionType.EXAMINE:
-            Destroy(gameObject);
-            break;
-            case InteractionType.EXAMINEANDPICKUP:
-            Destroy(gameObject);
-            break;
-            default:
-            Debug.LogWarning("Item has no type assigned.");
-            break;
+    private void Start() {
+        if (this.itemName == "") { this.itemName = gameObject.name; }
         }
+
+    public virtual  
+        void Interact() {
+        switch (interactionType) {
+            case InteractionType.PICKUP:
+                Destroy(gameObject);
+                break;
+            case InteractionType.EXAMINE:
+                if(this.itemType == ItemType.AUTOMATIC) {
+                    Debug.LogError("Destroying object " + this.itemName + ". It is an automatic item with an examine only attribute. " +
+                        "This would result in an uncloseable dialogue box. Please change its Interaction Type.");
+                    Destroy(gameObject);
+                    return;
+                }
+                FindObjectOfType<AvatarInteraction>().ExamineItem(this);
+                break;
+            case InteractionType.EXAMINEANDPICKUP:
+                FindObjectOfType<AvatarInteraction>().ExamineItem(this);
+                Destroy(gameObject);
+                break;
+            case InteractionType.EXAMINEANDDESTROY:
+                FindObjectOfType<AvatarInteraction>().ExamineItem(this);
+                Destroy(gameObject);
+                break;
+            default:
+                Debug.LogWarning(itemName + " has no type assigned.");
+                break;
+        }
+        customEvents.Invoke();
     }
 
     private void Reset() {

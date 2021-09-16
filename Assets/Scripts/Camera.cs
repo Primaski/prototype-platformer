@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Camera : MonoBehaviour{
     public Transform target;
-    public Vector3 offset = new Vector3(0, 0, -10);
+    public Vector3 offset = new Vector3(4, 0, -10);
     [Range(1,10)]
     public int smoothScrollFactor = 5;
 

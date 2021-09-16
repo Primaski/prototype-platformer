@@ -29,11 +29,13 @@ public class AvatarMovement : MonoBehaviour{
     private bool isGrounded = false;
     private bool isJumping = false;
     private bool isCrouching = false;
-    private float hVal, vVal;
     private bool flipped = false;
     private bool crouchReleasedUnderSurface = false;
     private bool airborneJump = false; //if noOfJumps < 2, this boolean will be irrelevant
     private bool landingFlag = false; //set to true if just made contact with ground anew
+    private bool characterIsFrozen = false;
+    private Vector2 prefreezingVelocity = Vector2.zero;
+    private float hVal, vVal;
     #endregion
 
     #region Startup and Updates
@@ -45,6 +47,11 @@ public class AvatarMovement : MonoBehaviour{
 
     private void Update(){
 
+        if (AllowedToMove() == characterIsFrozen) {
+            //character has either just been forced to freeze or thaw due to cutscene or dialogue
+            if (!AllowedToMove()) { FreezeCharacter(); return; }
+            if (AllowedToMove()) ThawCharacter();
+        }
         if (!AllowedToMove()) return;
 
         hVal = Input.GetAxis("Horizontal");
@@ -71,6 +78,14 @@ public class AvatarMovement : MonoBehaviour{
     }
 
     private void FixedUpdate() {
+
+        if (AllowedToMove() == characterIsFrozen) {
+            //character has either just been forced to freeze or thaw due to cutscene or dialogue
+            if (!AllowedToMove()) { FreezeCharacter(); return; }
+            if (AllowedToMove()) ThawCharacter();
+        }
+        if (!AllowedToMove()) return;
+
         isGrounded = GroundCheck();
         if (crouchReleasedUnderSurface && !CeilingCheck()) {
             isCrouching = crouchReleasedUnderSurface = false; //reset back to normal
@@ -87,8 +102,6 @@ public class AvatarMovement : MonoBehaviour{
     #region Movement
 
     private void Move(float direction) {
-
-        if (!AllowedToMove()) return;
 
         Crouch(); //does not crouch automatically, sets necessary animations and colliders if conditions are met
 
@@ -156,6 +169,19 @@ public class AvatarMovement : MonoBehaviour{
 
     private bool AllowedToMove() {
         return !FindObjectOfType<DialogueController>().windowIsActive;
+    }
+
+    private void FreezeCharacter() {
+        prefreezingVelocity = rb.velocity;
+        rb.isKinematic = true;
+        rb.velocity = Vector2.zero;
+        characterIsFrozen = true;
+    }
+
+    private void ThawCharacter() {
+        rb.isKinematic = false;
+        rb.velocity = prefreezingVelocity;
+        characterIsFrozen = false;
     }
 
     private void OnDrawGizmos() {

@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +17,10 @@ public class AvatarInteraction : MonoBehaviour{
     private const float detectionRadius = 0.2f;
     private GameObject item;
     private GameObject interactableItem;
-    bool activatedDialogueWindow = false;
+
+    /*Necessary placeholders since Unity doesn't like randomly floating Monobehavior scripts.*/
+    private TextMeshProUGUI titleForDialogueWindow;
+    private TextMeshProUGUI contentForDialogueWindow;
 
     private void Update() {
         if (DetectAutomaticItem()) {
@@ -24,13 +29,12 @@ public class AvatarInteraction : MonoBehaviour{
         if (DetectInteractableItem()) {
             if (Interact()) {
                 interactableItem.GetComponent<ItemInteractable>().Interact();
-                ExamineItem(interactableItem.GetComponent<Item>());
             }
         }
     }
 
     bool Interact() {
-        return Input.GetKeyDown(KeyCode.E);
+        return Input.GetButtonDown("Submit");
     }
 
     bool DetectAutomaticItem() {
@@ -54,13 +58,14 @@ public class AvatarInteraction : MonoBehaviour{
     public void ExamineItem(Item item) {
         string itemName = item.itemName;
         string itemDescription = item.descriptionText;
-        Sprite sprite = item.GetComponent<SpriteRenderer>().sprite;
+        Sprite sprite = (item.customImage == null) ? item.GetComponent<SpriteRenderer>().sprite : item.customImage;
         DisplayItemDialogueWindow(itemName, itemDescription, sprite);
     }
 
     public void DisplayItemDialogueWindow(string title, string description, Sprite sprite) {
-        //dialogueWindow.GetComponent<DialogueController>().DisplayDialogue(title, description, sprite, DialogueController.Source.ITEM_EXAMINE);
-        activatedDialogueWindow = true;
+        DialogueFrame frame = new DialogueFrame(title, description, sprite);
+        List<DialogueFrame> result = new List<DialogueFrame>() { frame };
+        dialogueWindow.GetComponent<DialogueController>().DisplayDialogueFrames(result, DialogueController.Source.ITEM_EXAMINE);
     }
 
     private void OnDrawGizmos() {
